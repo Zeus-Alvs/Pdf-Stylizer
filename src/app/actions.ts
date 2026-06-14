@@ -1,10 +1,18 @@
 "use server";
 
 import { put } from "@vercel/blob";
-import { getDbPool } from "@/lib/db";
 import fs from "fs/promises";
 import path from "path";
 import crypto from "crypto";
+
+// Função auxiliar para criar um slug bonito baseado no nome do arquivo
+function createSlug(filename: string) {
+  const nameWithoutExt = filename.replace(/\.pdf$/i, "");
+  return nameWithoutExt
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)+/g, ""); // Remove hífens sobrando no começo e fim
+}
 
 export async function uploadPdfAction(formData: FormData) {
   try {
@@ -17,55 +25,43 @@ export async function uploadPdfAction(formData: FormData) {
     if (file.type !== "application/pdf") {
       throw new Error("O arquivo deve ser um documento PDF.");
     }
-
-    let finalUrl = "";
     
-    // Verifica se estamos em localhost E se NÃO temos o token do Vercel Blob
     const isLocal = process.env.NODE_ENV === "development";
     const hasBlobToken = !!process.env.BLOB_READ_WRITE_TOKEN;
 
+    // Gerar a nossa "Primary Key" baseada no nome do arquivo (Sem Banco de Dados!)
+    const slug = createSlug(file.name) || "documento";
+    const shortUuid = crypto.randomUUID().split("-")[0]; // Apenas 8 caracteres de UUID para garantir unicidade
+    const documentId = `${slug}_${shortUuid}`;
+    const targetFilename = `${documentId}.pdf`;
+
+    let finalUrl = "";
+
     if (isLocal && !hasBlobToken) {
-      // --- LÓGICA DE UPLOAD LOCAL (Sem precisar da Vercel) ---
+      // --- LÓGICA DE UPLOAD LOCAL ---
       const bytes = await file.arrayBuffer();
       const buffer = Buffer.from(bytes);
       
-      // Gera um nome único para não sobrescrever arquivos
-      const uniqueName = `${crypto.randomUUID()}-${file.name.replace(/\s+/g, "_")}`;
-      
-      // O Next.js serve arquivos estáticos de dentro da pasta "public"
       const uploadDir = path.join(process.cwd(), "public", "uploads");
-      
-      // Cria a pasta "public/uploads" se ela não existir
       await fs.mkdir(uploadDir, { recursive: true });
       
-      const filePath = path.join(uploadDir, uniqueName);
-      
-      // Salva fisicamente o arquivo no seu computador
+      const filePath = path.join(uploadDir, targetFilename);
       await fs.writeFile(filePath, buffer);
       
-      // A URL de acesso será a rota relativa
-      finalUrl = `/uploads/${uniqueName}`;
+      finalUrl = `/uploads/${targetFilename}`;
       console.log("PDF salvo localmente em:", filePath);
       
     } else {
       // --- LÓGICA DE UPLOAD NUVEM (Vercel Blob) ---
-      const blob = await put(`pdfs/${file.name}`, file, {
+      const blob = await put(`pdfs/${targetFilename}`, file, {
         access: 'public',
+        addRandomSuffix: false // Nós mesmos já garantimos a unicidade com o shortUuid
       });
       finalUrl = blob.url;
     }
 
-    // 2. Registro no Banco de Dados Postgres (Local ou Vercel)
-    const pool = getDbPool();
-    const result = await pool.query(
-      "INSERT INTO documents (title, blob_url) VALUES ($1, $2) RETURNING id",
-      [file.name, finalUrl]
-    );
-
-    const newDocId = result.rows[0].id;
-
-    // 3. Retorna o ID
-    return { success: true, id: newDocId };
+    // Sucesso Total. Não precisamos mais do Postgres! O ID gerado carrega a identidade do arquivo.
+    return { success: true, id: documentId };
     
   } catch (error: any) {
     console.error("Erro na Server Action uploadPdfAction:", error);
