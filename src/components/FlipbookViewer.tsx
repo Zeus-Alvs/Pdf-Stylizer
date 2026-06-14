@@ -22,6 +22,7 @@ const PageWrapper = forwardRef<HTMLDivElement, { pageNumber: number; pageWidth?:
       <div 
         ref={ref} 
         className="page bg-white shadow-[inset_0_0_10px_rgba(0,0,0,0.1)] flex flex-col overflow-hidden"
+        data-density="soft"
       >
         {/* Usamos o canvas puro do PDF por desempenho e visual clean */}
         <Page 
@@ -66,7 +67,8 @@ export default function FlipbookViewer({ blobUrl }: FlipbookViewerProps) {
   let pageHeight = 636;
 
   if (windowWidth > 0 && windowHeight > 0) {
-    const margin = isMobile ? 0 : 60; // Margem de segurança para o desktop não colar nas bordas
+    // Aumentei a margem de 60 para 100 para dar espaço para o texto do rodapé respirar
+    const margin = isMobile ? 0 : 100;
     const availableHeight = windowHeight - margin;
     const availableWidth = windowWidth - margin;
 
@@ -100,7 +102,7 @@ export default function FlipbookViewer({ blobUrl }: FlipbookViewerProps) {
   };
 
   return (
-    <div className="w-full flex flex-col items-center justify-center min-h-[700px] overflow-hidden">
+    <div className="w-full h-full flex flex-col items-center justify-center overflow-hidden">
       {isLoading && !errorMsg && (
         <div className="flex flex-col items-center justify-center animate-pulse">
           <div className="w-12 h-12 border-4 border-zinc-200 border-t-zinc-800 rounded-full animate-spin mb-4"></div>
@@ -116,7 +118,7 @@ export default function FlipbookViewer({ blobUrl }: FlipbookViewerProps) {
       )}
 
       {/* O componente Document processa o arquivo em background */}
-      <div className={`transition-opacity duration-700 ease-in-out ${isLoading || errorMsg ? 'opacity-0 absolute -z-10' : 'opacity-100 py-10 z-10'}`}>
+      <div className={`transition-opacity duration-700 ease-in-out ${isLoading || errorMsg ? 'opacity-0 absolute -z-10' : 'opacity-100 flex items-center justify-center z-10'}`}>
         <Document
           file={blobUrl}
           onLoadSuccess={onDocumentLoadSuccess}
@@ -131,8 +133,11 @@ export default function FlipbookViewer({ blobUrl }: FlipbookViewerProps) {
               height={pageHeight} 
               size="fixed"
               usePortrait={isMobile ? true : false} // Mobile = 1 página por vez. Desktop = sempre 2 páginas lado a lado.
-              showCover={false} // Remove a física de capa e sobrecapa (o livro já começa aberto)
+              showCover={false} // Remove a física de capa e sobrecapa (o livro já começa aberto no desktop)
               mobileScrollSupport={true}
+              swipeDistance={30} // Ajuda o celular a reconhecer o swipe mais rápido para iniciar a animação
+              flippingTime={800} // Deixa a animação levemente mais rápida e fluida
+              maxShadowOpacity={0.5} // Melhora o visual da sombra do curl na dobra
               className="shadow-2xl mx-auto"
               style={{ margin: "0 auto" }}
             >
@@ -149,9 +154,11 @@ export default function FlipbookViewer({ blobUrl }: FlipbookViewerProps) {
       </div>
       
       {!isLoading && numPages > 0 && (
-        <p className="text-zinc-400 text-sm mt-4">
-          Arraste pelas pontas ou clique nas bordas para virar a página.
-        </p>
+        <div className="mt-6 text-center z-10">
+          <p className="text-zinc-400 text-sm">
+            Arraste pelas pontas ou clique nas bordas para virar a página.
+          </p>
+        </div>
       )}
     </div>
   );
