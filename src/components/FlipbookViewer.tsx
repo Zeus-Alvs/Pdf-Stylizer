@@ -67,15 +67,24 @@ export default function FlipbookViewer({ blobUrl }: FlipbookViewerProps) {
   let pageHeight = 636;
 
   if (windowWidth > 0 && windowHeight > 0) {
-    // Desktop: 100px. Mobile: 160px para dar espaço pro aviso de arrastar + a logo da Ludmyla
-    const margin = isMobile ? 160 : 100;
-    const availableHeight = windowHeight - margin;
-    const availableWidth = windowWidth - margin;
+    // A margem de altura (para caber o rodapé)
+    const marginHeight = isMobile ? 220 : 100;
+    // A margem de largura (para não encostar totalmente nas bordas laterais)
+    const marginWidth = isMobile ? 40 : 100; 
+    
+    const availableHeight = windowHeight - marginHeight;
+    const availableWidth = windowWidth - marginWidth;
 
     if (isMobile) {
-      // Mobile (1 página): a largura dita a altura
+      // Mobile (1 página): a largura tenta preencher a tela
       pageWidth = availableWidth;
       pageHeight = pageWidth * A4_RATIO;
+      
+      // Proteção: Se ao preencher a largura, a altura estourar o espaço do rodapé, nós encolhemos pela altura
+      if (pageHeight > availableHeight) {
+        pageHeight = availableHeight;
+        pageWidth = pageHeight / A4_RATIO;
+      }
     } else {
       // Desktop (2 páginas abertas): Tenta maximizar a altura até bater no teto
       pageHeight = availableHeight;
@@ -155,24 +164,28 @@ export default function FlipbookViewer({ blobUrl }: FlipbookViewerProps) {
       
       {!isLoading && numPages > 0 && (
         <div className="mt-4 flex flex-col items-center justify-center z-10 w-full px-4">
-          <p className="text-zinc-400 text-sm text-center mb-6">
+          <p className="text-zinc-400 text-sm text-center mb-4">
             Arraste pelas pontas ou clique nas bordas para virar a página.
           </p>
 
           {/* Modal / Assinatura (Versão Mobile - Embaixo do aviso) */}
-          <div className="flex md:hidden flex-col items-center justify-center">
-            {/* O Next.js permite usar imagens da pasta public apenas com a barra (/) */}
-            <img src="/belasartes.png" alt="Belas Artes" className="h-10 object-contain opacity-80 mb-2" />
-            <p className="text-zinc-500 text-xs text-center font-medium">Elaborado por: Ludmyla Azevedo Rocha</p>
+          <div className="flex md:hidden flex-col items-center justify-center bg-zinc-900/80 p-4 rounded-xl backdrop-blur-md shadow-lg border border-zinc-800">
+            {/* Fundo branco ao redor da logo para destacar PNGs transparentes */}
+            <div className="bg-white p-2.5 rounded-lg mb-2 w-full flex justify-center">
+              <img src="/belasartes.png" alt="Belas Artes" className="h-16 object-contain" />
+            </div>
+            <p className="text-zinc-300 text-xs text-center font-medium">Elaborado por: Ludmyla Azevedo Rocha</p>
           </div>
         </div>
       )}
 
       {/* Modal / Assinatura (Versão Desktop - Canto Esquerdo) */}
       {!isLoading && numPages > 0 && (
-        <div className="hidden md:flex absolute bottom-8 left-8 flex-col items-start z-50 pointer-events-none">
-          <img src="/belasartes.png" alt="Belas Artes" className="h-12 object-contain opacity-80 mb-2" />
-          <p className="text-zinc-400 text-xs bg-zinc-900/60 px-3 py-1.5 rounded-lg backdrop-blur-md font-medium shadow-lg border border-zinc-800/50">
+        <div className="hidden md:flex absolute bottom-8 left-8 flex-col items-center z-50 pointer-events-none bg-zinc-900/80 p-5 rounded-2xl backdrop-blur-md shadow-2xl border border-zinc-700/50">
+          <div className="bg-white p-3 rounded-xl mb-3">
+            <img src="/belasartes.png" alt="Belas Artes" className="h-20 object-contain" />
+          </div>
+          <p className="text-zinc-300 text-sm font-medium">
             Elaborado por: Ludmyla Azevedo Rocha
           </p>
         </div>
