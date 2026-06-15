@@ -171,9 +171,9 @@ export default function FlipbookViewer({ blobUrl }: FlipbookViewerProps) {
           {/* Modal / Assinatura (Versão Mobile - Embaixo do aviso) */}
           <div className="flex md:hidden flex-col items-center justify-center bg-zinc-900/80 p-4 rounded-xl backdrop-blur-md shadow-lg border border-zinc-800 w-full max-w-sm">
             {/* Fundo branco ao redor da logo para destacar PNGs transparentes */}
-            <div className="bg-white p-1 rounded-lg mb-2 w-full flex justify-center overflow-hidden">
-              {/* O scale-150 corta as margens transparentes excessivas que o PNG original possui */}
-              <img src="/belasartes.png" alt="Belas Artes" className="h-16 object-contain scale-150 my-2" />
+            <div className="bg-white rounded-lg mb-2 w-full flex justify-center items-center overflow-hidden" style={{ height: '70px' }}>
+              {/* scale-[2.2] para compensar as margens transparentes enormes do PNG original */}
+              <img src="/belasartes.png" alt="Belas Artes" className="h-full object-contain scale-[2.2]" />
             </div>
             <p className="text-zinc-300 text-xs text-center font-medium">Elaborado por: Ludmyla Azevedo Rocha</p>
           </div>
@@ -183,9 +183,9 @@ export default function FlipbookViewer({ blobUrl }: FlipbookViewerProps) {
       {/* Modal / Assinatura (Versão Desktop - Canto Esquerdo) */}
       {!isLoading && numPages > 0 && (
         <div className="hidden md:flex absolute bottom-8 left-8 flex-col items-center z-50 pointer-events-none bg-zinc-900/80 p-5 rounded-2xl backdrop-blur-md shadow-2xl border border-zinc-700/50">
-          <div className="bg-white p-1 rounded-xl mb-3 w-full flex justify-center overflow-hidden">
-            {/* O scale-[1.7] aproxima muito mais a logo para preencher a caixa branca */}
-            <img src="/belasartes.png" alt="Belas Artes" className="h-20 w-auto object-contain scale-[1.7] my-3 mx-4" />
+          <div className="bg-white rounded-xl mb-3 flex justify-center items-center overflow-hidden" style={{ width: '260px', height: '100px' }}>
+            {/* scale-[2.5] para a logo preencher por completo a caixa branca */}
+            <img src="/belasartes.png" alt="Belas Artes" className="h-full object-contain scale-[2.5]" />
           </div>
           <p className="text-zinc-300 text-sm font-medium">
             Elaborado por: Ludmyla Azevedo Rocha
