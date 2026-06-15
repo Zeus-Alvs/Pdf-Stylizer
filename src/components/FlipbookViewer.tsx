@@ -109,9 +109,10 @@ export default function FlipbookViewer({ blobUrl }: FlipbookViewerProps) {
         pageWidth = pageHeight / A4_RATIO;
       }
     } else if (isCinemaMode) {
-      // === MODO CINEMA (celular deitado) - Fullscreen absoluto ===
-      const availableHeight = windowHeight - 10;
-      const availableWidth = windowWidth - 10;
+      // === MODO CINEMA (celular/tablet deitado) - Fullscreen máximo ===
+      // Margem mínima absoluta (2px) para o PDF praticamente encostar nas bordas
+      const availableHeight = windowHeight - 4;
+      const availableWidth = windowWidth - 4;
 
       pageHeight = availableHeight;
       pageWidth = pageHeight / A4_RATIO;
