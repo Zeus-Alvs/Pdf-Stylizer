@@ -84,9 +84,10 @@ export default function FlipbookViewer({ blobUrl }: FlipbookViewerProps) {
       }
     } else {
       // === MODO PAISAGEM (2 páginas) ===
-      // Em celular deitado, a altura é muito curta, então usamos margens menores
-      const marginHeight = isSmallDevice ? 40 : 100;
-      const marginWidth = isSmallDevice ? 20 : 100;
+      // Celular deitado: fullscreen absoluto, zero margem
+      // Desktop: margem confortável para o modal e texto
+      const marginHeight = isSmallDevice ? 10 : 100;
+      const marginWidth = isSmallDevice ? 10 : 100;
       const availableHeight = windowHeight - marginHeight;
       const availableWidth = windowWidth - marginWidth;
 
@@ -148,7 +149,7 @@ export default function FlipbookViewer({ blobUrl }: FlipbookViewerProps) {
               size="fixed"
               usePortrait={isPortrait} // Retrato = 1 página. Paisagem = 2 páginas.
               showCover={false}
-              mobileScrollSupport={true}
+              mobileScrollSupport={isPortrait} // Desativa scroll no modo paisagem para não bugar
               swipeDistance={30}
               flippingTime={800}
               maxShadowOpacity={0.5}
@@ -184,14 +185,7 @@ export default function FlipbookViewer({ blobUrl }: FlipbookViewerProps) {
         </div>
       )}
 
-      {/* Instrução compacta no modo paisagem (celular deitado ou desktop) */}
-      {!isLoading && numPages > 0 && !isPortrait && isSmallDevice && (
-        <p className="text-zinc-400/60 text-xs text-center mt-1 z-10">
-          Arraste pelas pontas para virar a página.
-        </p>
-      )}
-
-      {/* Instrução + Modal Desktop (paisagem em tela grande) */}
+      {/* Instrução + Modal Desktop (paisagem em tela grande - NÃO aparece em celular deitado) */}
       {!isLoading && numPages > 0 && !isPortrait && !isSmallDevice && (
         <div className="mt-4 text-center z-10">
           <p className="text-zinc-400 text-sm">
@@ -200,8 +194,8 @@ export default function FlipbookViewer({ blobUrl }: FlipbookViewerProps) {
         </div>
       )}
 
-      {/* Modal / Assinatura (Versão Desktop/Paisagem grande - Canto Esquerdo) */}
-      {!isLoading && numPages > 0 && !isPortrait && (() => {
+      {/* Modal / Assinatura (Apenas Desktop - Canto Esquerdo) */}
+      {!isLoading && numPages > 0 && !isPortrait && !isSmallDevice && (() => {
         const bookTotalWidth = pageWidth * 2;
         const gapLeft = (windowWidth - bookTotalWidth) / 2;
         const modalScale = Math.min(1, Math.max(0.5, (gapLeft - 20) / 280));
