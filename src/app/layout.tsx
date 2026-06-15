@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "PdfStylizer",
+  title: "Pdf Stylizer",
   description: "Visualizador de PDFs em formato flipbook.",
 };
 
