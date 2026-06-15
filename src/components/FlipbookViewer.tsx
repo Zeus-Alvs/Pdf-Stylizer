@@ -46,12 +46,30 @@ export default function FlipbookViewer({ blobUrl }: FlipbookViewerProps) {
 
   useEffect(() => {
     // Configura os tamanhos logo que o componente é montado no navegador
+    let lastWidth = window.innerWidth;
+    let lastHeight = window.innerHeight;
+
     const handleResize = () => {
-      setWindowWidth(window.innerWidth);
-      setWindowHeight(window.innerHeight);
+      const newWidth = window.innerWidth;
+      const newHeight = window.innerHeight;
+      
+      // A barra de endereço do Chrome no Android muda a altura em ~60-100px ao sumir/aparecer.
+      // Se APENAS a altura mudou pouco (e a largura ficou igual), ignoramos para não bugar o flipbook.
+      const widthChanged = Math.abs(newWidth - lastWidth) > 5;
+      const heightDelta = Math.abs(newHeight - lastHeight);
+      const isJustBrowserChrome = !widthChanged && heightDelta < 150;
+      
+      if (isJustBrowserChrome && lastWidth > 0) {
+        return; // Ignora: é só a barra de endereço sumindo/aparecendo
+      }
+
+      lastWidth = newWidth;
+      lastHeight = newHeight;
+      setWindowWidth(newWidth);
+      setWindowHeight(newHeight);
       // Usa a proporção da tela:
       // Tela em pé (9:16) = 1 página | Tela deitada (16:9) = 2 páginas
-      setIsPortrait(window.innerHeight > window.innerWidth);
+      setIsPortrait(newHeight > newWidth);
     };
     
     handleResize(); // Chamada inicial
