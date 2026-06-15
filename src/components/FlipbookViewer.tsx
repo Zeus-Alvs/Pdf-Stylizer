@@ -4,12 +4,8 @@ import React, { useState, forwardRef, useEffect } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import HTMLFlipBook from "react-pageflip";
 
-// Configura o Web Worker do PDF.js (essencial para não travar o navegador)
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
-
-// Importa os estilos CSS fundamentais para que as camadas do PDF não quebrem
-import "react-pdf/dist/Page/AnnotationLayer.css";
-import "react-pdf/dist/Page/TextLayer.css";
+// Worker do PDF.js via CDN rápida (cdnjs)
+pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.mjs`;
 
 interface FlipbookViewerProps {
   blobUrl: string;
@@ -46,16 +42,16 @@ export default function FlipbookViewer({ blobUrl }: FlipbookViewerProps) {
   // Estado para controlar o tamanho da tela e definir Single/Double page
   const [windowWidth, setWindowWidth] = useState<number>(1024);
   const [windowHeight, setWindowHeight] = useState<number>(800);
-  const [isMobile, setIsMobile] = useState<boolean>(false);
+  const [isPortrait, setIsPortrait] = useState<boolean>(false);
 
   useEffect(() => {
     // Configura os tamanhos logo que o componente é montado no navegador
     const handleResize = () => {
       setWindowWidth(window.innerWidth);
       setWindowHeight(window.innerHeight);
-      // Usa a proporção da tela em vez de pixels fixos:
+      // Usa a proporção da tela:
       // Tela em pé (9:16) = 1 página | Tela deitada (16:9) = 2 páginas
-      setIsMobile(window.innerHeight > window.innerWidth);
+      setIsPortrait(window.innerHeight > window.innerWidth);
     };
     
     handleResize(); // Chamada inicial
@@ -63,38 +59,43 @@ export default function FlipbookViewer({ blobUrl }: FlipbookViewerProps) {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // Detecta se é um dispositivo com tela pequena (celular/tablet), independente da orientação
+  const isSmallDevice = Math.min(windowWidth, windowHeight) < 900;
+
   // --- MATEMÁTICA PARA MÁXIMA OCUPAÇÃO DE TELA (FULLSCREEN) ---
   const A4_RATIO = 1.414;
   let pageWidth = 450;
   let pageHeight = 636;
 
   if (windowWidth > 0 && windowHeight > 0) {
-    // A margem de altura (para caber o rodapé)
-    const marginHeight = isMobile ? 220 : 100;
-    // A margem de largura (para não encostar totalmente nas bordas laterais)
-    const marginWidth = isMobile ? 40 : 100; 
-    
-    const availableHeight = windowHeight - marginHeight;
-    const availableWidth = windowWidth - marginWidth;
+    if (isPortrait) {
+      // === MODO RETRATO (1 página) ===
+      const marginHeight = 220; // Espaço para rodapé + modal
+      const marginWidth = 40;   // Respiro lateral mínimo
+      const availableHeight = windowHeight - marginHeight;
+      const availableWidth = windowWidth - marginWidth;
 
-    if (isMobile) {
-      // Mobile (1 página): a largura tenta preencher a tela
       pageWidth = availableWidth;
       pageHeight = pageWidth * A4_RATIO;
       
-      // Proteção: Se ao preencher a largura, a altura estourar o espaço do rodapé, nós encolhemos pela altura
       if (pageHeight > availableHeight) {
         pageHeight = availableHeight;
         pageWidth = pageHeight / A4_RATIO;
       }
     } else {
-      // Desktop (2 páginas abertas): Tenta maximizar a altura até bater no teto
+      // === MODO PAISAGEM (2 páginas) ===
+      // Em celular deitado, a altura é muito curta, então usamos margens menores
+      const marginHeight = isSmallDevice ? 40 : 100;
+      const marginWidth = isSmallDevice ? 20 : 100;
+      const availableHeight = windowHeight - marginHeight;
+      const availableWidth = windowWidth - marginWidth;
+
+      // Maximiza pela altura primeiro
       pageHeight = availableHeight;
       pageWidth = pageHeight / A4_RATIO;
 
-      // Mas se o resultado da largura (x2 páginas) for estourar o monitor nas laterais...
+      // Se estourar a largura (2 páginas), recalcula pela largura
       if ((pageWidth * 2) > availableWidth) {
-        // ...nós invertemos e usamos a largura máxima permitida como base
         pageWidth = availableWidth / 2;
         pageHeight = pageWidth * A4_RATIO;
       }
@@ -113,7 +114,9 @@ export default function FlipbookViewer({ blobUrl }: FlipbookViewerProps) {
   };
 
   return (
-    <div className="w-full h-full flex flex-col items-center justify-start pt-4 md:justify-center md:pt-0 overflow-hidden">
+    <div className={`w-full h-full flex flex-col items-center overflow-hidden ${
+      isPortrait ? 'justify-start pt-4' : 'justify-center'
+    }`}>
       {isLoading && !errorMsg && (
         <div className="flex flex-col items-center justify-center animate-pulse mt-20">
           <div className="w-12 h-12 border-4 border-zinc-200 border-t-zinc-800 rounded-full animate-spin mb-4"></div>
@@ -139,16 +142,16 @@ export default function FlipbookViewer({ blobUrl }: FlipbookViewerProps) {
           {numPages > 0 && (
             // @ts-ignore - Tipagens do react-pageflip as vezes falham
             <HTMLFlipBook
-              key={isMobile ? "mobile" : "desktop"} // Força o react-pageflip a recriar o livro ao mudar de desktop pra mobile
+              key={isPortrait ? "portrait" : "landscape"} // Força recriação ao rotacionar
               width={pageWidth} 
               height={pageHeight} 
               size="fixed"
-              usePortrait={isMobile ? true : false} // Mobile = 1 página por vez. Desktop = sempre 2 páginas lado a lado.
-              showCover={false} // Remove a física de capa e sobrecapa (o livro já começa aberto no desktop)
+              usePortrait={isPortrait} // Retrato = 1 página. Paisagem = 2 páginas.
+              showCover={false}
               mobileScrollSupport={true}
-              swipeDistance={30} // Ajuda o celular a reconhecer o swipe mais rápido para iniciar a animação
-              flippingTime={800} // Deixa a animação levemente mais rápida e fluida
-              maxShadowOpacity={0.5} // Melhora o visual da sombra do curl na dobra
+              swipeDistance={30}
+              flippingTime={800}
+              maxShadowOpacity={0.5}
               className="shadow-2xl mx-auto"
               style={{ margin: "0 auto" }}
             >
@@ -164,17 +167,16 @@ export default function FlipbookViewer({ blobUrl }: FlipbookViewerProps) {
         </Document>
       </div>
       
-      {!isLoading && numPages > 0 && (
+      {/* Rodapé: Instrução + Modal (apenas no modo retrato / em pé) */}
+      {!isLoading && numPages > 0 && isPortrait && (
         <div className="mt-6 flex flex-col items-center justify-center z-10 w-full px-4">
           <p className="text-zinc-400 text-sm text-center mb-4">
             Arraste pelas pontas ou clique nas bordas para virar a página.
           </p>
 
-          {/* Modal / Assinatura (Versão Mobile - Embaixo do aviso) */}
-          <div className="flex md:hidden flex-col items-center justify-center bg-zinc-900/80 p-4 rounded-xl backdrop-blur-md shadow-lg border border-zinc-800 w-full max-w-sm">
-            {/* Fundo branco ao redor da logo para destacar PNGs transparentes */}
+          {/* Modal / Assinatura (Versão Retrato - Embaixo do aviso) */}
+          <div className="flex flex-col items-center justify-center bg-zinc-900/80 p-4 rounded-xl backdrop-blur-md shadow-lg border border-zinc-800 w-full max-w-sm">
             <div className="bg-white rounded-lg mb-2 w-full flex justify-center items-center overflow-hidden" style={{ height: '70px' }}>
-              {/* scale-[2.2] para compensar as margens transparentes enormes do PNG original */}
               <img src="/belasartes.png" alt="Belas Artes" className="h-full object-contain scale-[2.2]" />
             </div>
             <p className="text-zinc-300 text-xs text-center font-medium">Elaborado por: Ludmyla Azevedo Rocha</p>
@@ -182,18 +184,31 @@ export default function FlipbookViewer({ blobUrl }: FlipbookViewerProps) {
         </div>
       )}
 
-      {/* Modal / Assinatura (Versão Desktop - Canto Esquerdo) */}
-      {!isLoading && numPages > 0 && !isMobile && (() => {
-        // Calcula o espaço livre entre a borda esquerda da tela e a borda esquerda do PDF
+      {/* Instrução compacta no modo paisagem (celular deitado ou desktop) */}
+      {!isLoading && numPages > 0 && !isPortrait && isSmallDevice && (
+        <p className="text-zinc-400/60 text-xs text-center mt-1 z-10">
+          Arraste pelas pontas para virar a página.
+        </p>
+      )}
+
+      {/* Instrução + Modal Desktop (paisagem em tela grande) */}
+      {!isLoading && numPages > 0 && !isPortrait && !isSmallDevice && (
+        <div className="mt-4 text-center z-10">
+          <p className="text-zinc-400 text-sm">
+            Arraste pelas pontas ou clique nas bordas para virar a página.
+          </p>
+        </div>
+      )}
+
+      {/* Modal / Assinatura (Versão Desktop/Paisagem grande - Canto Esquerdo) */}
+      {!isLoading && numPages > 0 && !isPortrait && (() => {
         const bookTotalWidth = pageWidth * 2;
         const gapLeft = (windowWidth - bookTotalWidth) / 2;
-        // Se o espaço for menor que 200px, o modal encolhe proporcionalmente
         const modalScale = Math.min(1, Math.max(0.5, (gapLeft - 20) / 280));
-        // Se o espaço for absurdamente pequeno (<80px), esconde o modal completamente
         if (gapLeft < 80) return null;
         return (
           <div
-            className="hidden md:flex absolute bottom-8 left-4 flex-col items-center z-50 pointer-events-none bg-zinc-900/80 p-5 rounded-2xl backdrop-blur-md shadow-2xl border border-zinc-700/50"
+            className="absolute bottom-8 left-4 flex flex-col items-center z-50 pointer-events-none bg-zinc-900/80 p-5 rounded-2xl backdrop-blur-md shadow-2xl border border-zinc-700/50"
             style={{
               transformOrigin: 'bottom left',
               transform: `scale(${modalScale})`,
