@@ -21,7 +21,7 @@ const PageWrapper = forwardRef<HTMLDivElement, { pageNumber: number; pageWidth?:
     return (
       <div 
         ref={ref} 
-        className="page bg-white shadow-[inset_0_0_10px_rgba(0,0,0,0.1)] flex flex-col overflow-hidden"
+        className="page bg-white shadow-[inset_0_0_10px_rgba(0,0,0,0.1)] flex flex-col"
         data-density="soft"
       >
         {/* Usamos o canvas puro do PDF por desempenho e visual clean */}
@@ -111,23 +111,23 @@ export default function FlipbookViewer({ blobUrl }: FlipbookViewerProps) {
   };
 
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center overflow-hidden">
+    <div className="w-full h-full flex flex-col items-center justify-start pt-4 md:justify-center md:pt-0 overflow-hidden">
       {isLoading && !errorMsg && (
-        <div className="flex flex-col items-center justify-center animate-pulse">
+        <div className="flex flex-col items-center justify-center animate-pulse mt-20">
           <div className="w-12 h-12 border-4 border-zinc-200 border-t-zinc-800 rounded-full animate-spin mb-4"></div>
           <p className="text-zinc-600 font-medium">Preparando o Flipbook...</p>
         </div>
       )}
 
       {errorMsg && (
-        <div className="bg-red-50 text-red-600 p-4 rounded-lg border border-red-200">
+        <div className="bg-red-50 text-red-600 p-4 rounded-lg border border-red-200 mt-20">
           <p className="font-bold">Falha ao carregar o documento.</p>
           <p className="text-sm">{errorMsg}</p>
         </div>
       )}
 
       {/* O componente Document processa o arquivo em background */}
-      <div className={`transition-opacity duration-700 ease-in-out ${isLoading || errorMsg ? 'opacity-0 absolute -z-10' : 'opacity-100 flex items-center justify-center z-10'}`}>
+      <div className={`transition-opacity duration-700 ease-in-out w-full flex justify-center ${isLoading || errorMsg ? 'opacity-0 absolute -z-10' : 'opacity-100 flex items-center justify-center z-10'}`}>
         <Document
           file={blobUrl}
           onLoadSuccess={onDocumentLoadSuccess}
@@ -163,16 +163,17 @@ export default function FlipbookViewer({ blobUrl }: FlipbookViewerProps) {
       </div>
       
       {!isLoading && numPages > 0 && (
-        <div className="mt-4 flex flex-col items-center justify-center z-10 w-full px-4">
+        <div className="mt-6 flex flex-col items-center justify-center z-10 w-full px-4">
           <p className="text-zinc-400 text-sm text-center mb-4">
             Arraste pelas pontas ou clique nas bordas para virar a página.
           </p>
 
           {/* Modal / Assinatura (Versão Mobile - Embaixo do aviso) */}
-          <div className="flex md:hidden flex-col items-center justify-center bg-zinc-900/80 p-4 rounded-xl backdrop-blur-md shadow-lg border border-zinc-800">
+          <div className="flex md:hidden flex-col items-center justify-center bg-zinc-900/80 p-4 rounded-xl backdrop-blur-md shadow-lg border border-zinc-800 w-full max-w-sm">
             {/* Fundo branco ao redor da logo para destacar PNGs transparentes */}
-            <div className="bg-white p-2.5 rounded-lg mb-2 w-full flex justify-center">
-              <img src="/belasartes.png" alt="Belas Artes" className="h-16 object-contain" />
+            <div className="bg-white p-1 rounded-lg mb-2 w-full flex justify-center overflow-hidden">
+              {/* O scale-150 corta as margens transparentes excessivas que o PNG original possui */}
+              <img src="/belasartes.png" alt="Belas Artes" className="h-16 object-contain scale-150 my-2" />
             </div>
             <p className="text-zinc-300 text-xs text-center font-medium">Elaborado por: Ludmyla Azevedo Rocha</p>
           </div>
@@ -182,8 +183,9 @@ export default function FlipbookViewer({ blobUrl }: FlipbookViewerProps) {
       {/* Modal / Assinatura (Versão Desktop - Canto Esquerdo) */}
       {!isLoading && numPages > 0 && (
         <div className="hidden md:flex absolute bottom-8 left-8 flex-col items-center z-50 pointer-events-none bg-zinc-900/80 p-5 rounded-2xl backdrop-blur-md shadow-2xl border border-zinc-700/50">
-          <div className="bg-white p-3 rounded-xl mb-3">
-            <img src="/belasartes.png" alt="Belas Artes" className="h-20 object-contain" />
+          <div className="bg-white p-1 rounded-xl mb-3 w-full flex justify-center overflow-hidden">
+            {/* O scale-[1.7] aproxima muito mais a logo para preencher a caixa branca */}
+            <img src="/belasartes.png" alt="Belas Artes" className="h-20 w-auto object-contain scale-[1.7] my-3 mx-4" />
           </div>
           <p className="text-zinc-300 text-sm font-medium">
             Elaborado por: Ludmyla Azevedo Rocha
