@@ -133,7 +133,7 @@ export default function FlipbookViewer({ blobUrl }: FlipbookViewerProps) {
               height={pageHeight} 
               size="fixed"
               usePortrait={isMobile ? true : false} // Mobile = 1 página por vez. Desktop = sempre 2 páginas lado a lado.
-              showCover={isMobile ? true : false} // IMPORTANTE: no Mobile o cover precisa ser true para a engine de física renderizar a volta da página. No desktop fica false.
+              showCover={false} // Remove a física de capa e sobrecapa (o livro já começa aberto no desktop)
               mobileScrollSupport={true}
               swipeDistance={30} // Ajuda o celular a reconhecer o swipe mais rápido para iniciar a animação
               flippingTime={800} // Deixa a animação levemente mais rápida e fluida
