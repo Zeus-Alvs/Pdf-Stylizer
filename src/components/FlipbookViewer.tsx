@@ -53,7 +53,9 @@ export default function FlipbookViewer({ blobUrl }: FlipbookViewerProps) {
     const handleResize = () => {
       setWindowWidth(window.innerWidth);
       setWindowHeight(window.innerHeight);
-      setIsMobile(window.innerWidth < 768);
+      // Usa a proporção da tela em vez de pixels fixos:
+      // Tela em pé (9:16) = 1 página | Tela deitada (16:9) = 2 páginas
+      setIsMobile(window.innerHeight > window.innerWidth);
     };
     
     handleResize(); // Chamada inicial
