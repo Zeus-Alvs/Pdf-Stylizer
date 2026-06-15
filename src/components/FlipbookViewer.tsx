@@ -67,8 +67,8 @@ export default function FlipbookViewer({ blobUrl }: FlipbookViewerProps) {
   let pageHeight = 636;
 
   if (windowWidth > 0 && windowHeight > 0) {
-    // Aumentei a margem de 60 para 100 para dar espaço para o texto do rodapé respirar
-    const margin = isMobile ? 0 : 100;
+    // Desktop: 100px. Mobile: 160px para dar espaço pro aviso de arrastar + a logo da Ludmyla
+    const margin = isMobile ? 160 : 100;
     const availableHeight = windowHeight - margin;
     const availableWidth = windowWidth - margin;
 
@@ -154,9 +154,26 @@ export default function FlipbookViewer({ blobUrl }: FlipbookViewerProps) {
       </div>
       
       {!isLoading && numPages > 0 && (
-        <div className="mt-6 text-center z-10">
-          <p className="text-zinc-400 text-sm">
+        <div className="mt-4 flex flex-col items-center justify-center z-10 w-full px-4">
+          <p className="text-zinc-400 text-sm text-center mb-6">
             Arraste pelas pontas ou clique nas bordas para virar a página.
+          </p>
+
+          {/* Modal / Assinatura (Versão Mobile - Embaixo do aviso) */}
+          <div className="flex md:hidden flex-col items-center justify-center">
+            {/* O Next.js permite usar imagens da pasta public apenas com a barra (/) */}
+            <img src="/belasartes.png" alt="Belas Artes" className="h-10 object-contain opacity-80 mb-2" />
+            <p className="text-zinc-500 text-xs text-center font-medium">Elaborado por: Ludmyla Azevedo Rocha</p>
+          </div>
+        </div>
+      )}
+
+      {/* Modal / Assinatura (Versão Desktop - Canto Esquerdo) */}
+      {!isLoading && numPages > 0 && (
+        <div className="hidden md:flex absolute bottom-8 left-8 flex-col items-start z-50 pointer-events-none">
+          <img src="/belasartes.png" alt="Belas Artes" className="h-12 object-contain opacity-80 mb-2" />
+          <p className="text-zinc-400 text-xs bg-zinc-900/60 px-3 py-1.5 rounded-lg backdrop-blur-md font-medium shadow-lg border border-zinc-800/50">
+            Elaborado por: Ludmyla Azevedo Rocha
           </p>
         </div>
       )}
