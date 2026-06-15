@@ -181,17 +181,32 @@ export default function FlipbookViewer({ blobUrl }: FlipbookViewerProps) {
       )}
 
       {/* Modal / Assinatura (Versão Desktop - Canto Esquerdo) */}
-      {!isLoading && numPages > 0 && (
-        <div className="hidden md:flex absolute bottom-8 left-8 flex-col items-center z-50 pointer-events-none bg-zinc-900/80 p-5 rounded-2xl backdrop-blur-md shadow-2xl border border-zinc-700/50">
-          <div className="bg-white rounded-xl mb-3 flex justify-center items-center overflow-hidden" style={{ width: '260px', height: '100px' }}>
-            {/* scale-[2.5] para a logo preencher por completo a caixa branca */}
-            <img src="/belasartes.png" alt="Belas Artes" className="h-full object-contain scale-[2.5]" />
+      {!isLoading && numPages > 0 && !isMobile && (() => {
+        // Calcula o espaço livre entre a borda esquerda da tela e a borda esquerda do PDF
+        const bookTotalWidth = pageWidth * 2;
+        const gapLeft = (windowWidth - bookTotalWidth) / 2;
+        // Se o espaço for menor que 200px, o modal encolhe proporcionalmente
+        const modalScale = Math.min(1, Math.max(0.5, (gapLeft - 20) / 280));
+        // Se o espaço for absurdamente pequeno (<80px), esconde o modal completamente
+        if (gapLeft < 80) return null;
+        return (
+          <div
+            className="hidden md:flex absolute bottom-8 left-4 flex-col items-center z-50 pointer-events-none bg-zinc-900/80 p-5 rounded-2xl backdrop-blur-md shadow-2xl border border-zinc-700/50"
+            style={{
+              transformOrigin: 'bottom left',
+              transform: `scale(${modalScale})`,
+              maxWidth: `${gapLeft - 30}px`,
+            }}
+          >
+            <div className="bg-white rounded-xl mb-3 flex justify-center items-center overflow-hidden" style={{ width: '260px', height: '100px' }}>
+              <img src="/belasartes.png" alt="Belas Artes" className="h-full object-contain scale-[2.5]" />
+            </div>
+            <p className="text-zinc-300 text-sm font-medium">
+              Elaborado por: Ludmyla Azevedo Rocha
+            </p>
           </div>
-          <p className="text-zinc-300 text-sm font-medium">
-            Elaborado por: Ludmyla Azevedo Rocha
-          </p>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }
